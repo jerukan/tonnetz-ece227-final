@@ -24,12 +24,12 @@ class MidiTonnetzDataset(Dataset):
 
     Represents as a series of finite Tonentz graphs for each measure in a song.
     """
-    def __init__(self, midi_path, nprev=1, transform=None, interval="quarter"):
+    def __init__(self, midi_path, nprev=1, transform=None, interval="quarter", midioffset=0):
         self.midi_path = Path(midi_path)
         if not self.midi_path.exists():
             raise FileNotFoundError(f"{midi_path} does not exist")
         self.score = m21.converter.parse(self.midi_path)
-        self.tonnetzmaps: List[tnzu.TonnetzMap] = tnzu.midi_to_tonnetzmaps(self.midi_path, interval=interval)
+        self.tonnetzmaps: List[tnzu.TonnetzMap] = tnzu.midi_to_tonnetzmaps(self.midi_path, interval=interval, midioffset=midioffset)
         self.oddqgrids = np.array([tm.to_oddq_grid().astype(np.float32) for tm in self.tonnetzmaps])
         if transform is None:
             self.transform = v2.Compose([
@@ -165,8 +165,6 @@ class CrapModel(L.LightningModule):
         self.conv2 = hexagdly.Conv2d(64, 128, kernel_size=2)
         self.conv3 = hexagdly.Conv2d(128, 64, kernel_size=1)
         self.finalconv = hexagdly.Conv2d(64, 1, kernel_size=1)
-        self.dropout = nn.Dropout(p=0.3)
-        self.activation = nn.Sigmoid()
         self.lossfunc = nn.BCEWithLogitsLoss(pos_weight=torch.FloatTensor([pos_weight]).to("mps:0"))
 
     def encoder(self, x):
@@ -199,5 +197,4 @@ class CrapModel(L.LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=0.001)
-        # optimizer = optim.SGD(self.parameters(), lr=0.001, momentum=0.9)
         return optimizer

@@ -263,6 +263,7 @@ class TonnetzMap:
     
     @classmethod
     def from_oddqgrid(cls, grid):
+        """Assumes 13x9 finite Tonnetz grid, oddq hex coordinate format."""
         tm = cls()
         active_coords = []
         for i, row in enumerate(grid):
@@ -343,7 +344,7 @@ def maps2chordscore(tmaps, quarterLength=1.0, bpm=120):
     return s
 
 
-def midi_to_tonnetzmaps(midi_path, interval="quarter") -> List[TonnetzMap]:
+def midi_to_tonnetzmaps(midi_path, interval="quarter", midioffset=0) -> List[TonnetzMap]:
     interval2offset = {
         "eighth": 0.5,
         "quarter": 1.0,
@@ -365,9 +366,9 @@ def midi_to_tonnetzmaps(midi_path, interval="quarter") -> List[TonnetzMap]:
                 midivals = set()
                 curroffset += interval
             if isinstance(mobj, m21.chord.Chord):
-                midivals.update([chnote.pitch.midi for chnote in mobj.notes])
+                midivals.update([chnote.pitch.midi + midioffset for chnote in mobj.notes])
             elif isinstance(mobj, m21.note.Note):
-                midivals.add(mobj.pitch.midi)
+                midivals.add(mobj.pitch.midi + midioffset)
         # notes = list(m.flatten().notes)
         # midivals = set()
         # for n in notes:
